@@ -130,7 +130,7 @@ class BooleanRetrievalSystem:
                 intersect_list2=temp_list
 
             for position in intersect_list1:
-                if self.binary_search(intersect_list2,position+(int(proximity_ratio)+1),position+1):
+                if self.binary_search(intersect_list2,position+(int(proximity_ratio)+1),position-(int(proximity_ratio)+1)):
                     proximity_query_final_list.append(docId)
                     break
 
