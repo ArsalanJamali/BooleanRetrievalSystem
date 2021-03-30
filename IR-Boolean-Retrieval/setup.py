@@ -3,23 +3,33 @@ from string import punctuation
 from nltk.tokenize import word_tokenize
 import contractions
 from nltk.stem import PorterStemmer
+import json
 
 ps=PorterStemmer()
 DATASET_DIR=os.path.join(os.getcwd(),'dataset/ShortStories/')
-TOTAL_DOCS=None
+TOTAL_DOCS=50
+DISK_READ=False
 
 
 class BooleanRetrievalSystem:
 
     def __init__(self):
         global punctuation
+        global DISK_READ
         punctuation+='“”’‘—'  #inorder to deal with punctuations of different unicode
         self.vocabulary=dict()  #for positional index
         self.inverted_index=dict()  #for inverted index
         self.stop_word=["a", "is", "the", "of", "all", "and", "to", "can", "be", "as", "once"
                         , "for", "at", "am", "are", "has", "have", "had", "up", "his", "her", "in", "on", "no", "we", "do"]                
 
+        if os.path.exists((os.path.join(os.getcwd(),'inverted_index.json'))) and os.path.exists((os.path.join(os.getcwd(),'positional_index.json'))):
+            DISK_READ=True
 
+        if DISK_READ:
+            with open('inverted_index.json','r') as json_file:
+                self.inverted_index=json.load(json_file)
+            with open('positional_index.json','r') as json_file_2:
+                self.vocabulary=json.load(json_file_2)        
 
     def pre_process(self,document):
         document=document.lower()  #lowers the text
@@ -60,6 +70,7 @@ class BooleanRetrievalSystem:
                 word_list,stem_list=self.pre_process(f.read())
                 self.create_vocab(word_list,stem_list,doc_id)
         TOTAL_DOCS=len(os.listdir(DATASET_DIR))
+        self.write_files()
 
     def intersect_list(self,list_1,list_2):
         intersect_list=list()
@@ -94,8 +105,15 @@ class BooleanRetrievalSystem:
         word2=word2.replace(' ','')
         word1=ps.stem(word1)
         word2=ps.stem(word2)
-        list_1=list(model.vocabulary[word1].keys())
-        list_2=list(model.vocabulary[word2].keys())
+        list_1,list_2=(None,None)
+        try:
+            list_1=list(model.vocabulary[word1].keys())
+            list_2=list(model.vocabulary[word2].keys())
+        except:
+            list_1=list()
+            list_2=list()
+
+
         list_1.sort()
         list_2.sort()
         intersect_list=model.intersect_list(list_1,list_2)
@@ -194,14 +212,26 @@ class BooleanRetrievalSystem:
 
             index+=1
 
-
+        if len(values)==0:
+            return []
         return values.pop()
 
-            
 
+    def write_files(self):
+        inverted_index_json=json.dumps(self.inverted_index)
+        positional_index_json=json.dumps(self.vocabulary)
+        with open('inverted_index.json','w') as inverted_json:
+            inverted_json.write(inverted_index_json)
+        with open('positional_index.json','w') as positional_json:
+            positional_json.write(positional_index_json)
+                                
+
+model=None
 if __name__=='__main__':
     model=BooleanRetrievalSystem()
-    model.process_txt()
+    if not DISK_READ:
+        print('Index not found creating it')
+        model.process_txt()
     flag=True
     while flag:
         user_query=input('Enter your query: ')
@@ -212,3 +242,14 @@ if __name__=='__main__':
             model.process_proximity_query(user_query)
         else:
             print(model.process_boolean_query(user_query))
+else:
+    model=BooleanRetrievalSystem()
+    if not DISK_READ:
+        print('Index not found creating it')
+        model.process_txt()
+        
+
+
+        
+    
+
