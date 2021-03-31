@@ -1,14 +1,14 @@
-import os
-from string import punctuation
-from nltk.tokenize import word_tokenize
-import contractions
-from nltk.stem import PorterStemmer
-import json
+import os            #for OS related activities fetching directory, searching ,marking existence of directory
+from string import punctuation  #importing build in punctuation's
+from nltk.tokenize import word_tokenize  #importing build in tokenizer
+import contractions  #for removing contractions for I'll -> I will
+from nltk.stem import PorterStemmer  #importing porterstemmer algorithm 
+import json  #json for saving and loading index's
 
 ps=PorterStemmer()
-DATASET_DIR=os.path.join(os.getcwd(),'dataset/ShortStories/')
-TOTAL_DOCS=50
-DISK_READ=False
+DATASET_DIR=os.path.join(os.getcwd(),'dataset/ShortStories/')   #for dataset directory
+TOTAL_DOCS=50 #number of docs
+DISK_READ=False #flag to check if index were fetched from disk for not
 
 
 class BooleanRetrievalSystem:
@@ -45,8 +45,8 @@ class BooleanRetrievalSystem:
     def calculate_all_occurance(self,stem_list,docId):
         index=0
         while index<len(stem_list):
-            if stem_list[index] in self.vocabulary:
-                word=stem_list[index]
+            if stem_list[index] in self.vocabulary:       #this function check's if word exist in dictionary then creates list for  
+                word=stem_list[index]                      #that particular docId and starts appending positions to that list 
                 if docId not in self.vocabulary[word]:
                     self.vocabulary[word][docId]=list()
                 self.vocabulary[word][docId].append(index)    
@@ -54,17 +54,17 @@ class BooleanRetrievalSystem:
 
     def create_vocab(self,word_list,stem_list,docId):
 
-        for word in word_list:
-            if word not in self.vocabulary:
-                self.vocabulary[word]=dict()
+        for word in word_list:                #going thorough all pre processed list of words and then creating 
+            if word not in self.vocabulary:   #dictionary both inverted and positional are created here but positional is further 
+                self.vocabulary[word]=dict()  #evaluated in calculate_all_occurance function where we calculate positions
                 self.inverted_index[word]=list()
             self.inverted_index[word].append(docId)
         self.calculate_all_occurance(stem_list,docId)        
         
     def process_txt(self):
         global TOTAL_DOCS
-        for txt_file in os.listdir(DATASET_DIR):
-            if txt_file.endswith('.txt'):
+        for txt_file in os.listdir(DATASET_DIR):   #going thorough all txt files in the folder and then calling pre_process function 
+            if txt_file.endswith('.txt'):          #for pre processing and then creating index's 
                 doc_id=int(txt_file.split('.')[0])
                 f=open(os.path.join(DATASET_DIR,txt_file),'r',encoding='utf-8')
                 word_list,stem_list=self.pre_process(f.read())
@@ -75,8 +75,8 @@ class BooleanRetrievalSystem:
     def intersect_list(self,list_1,list_2):
         intersect_list=list()
         index1,index2=(0,0)
-        while index1<len(list_1) and index2<len(list_2):
-            if list_1[index1]==list_2[index2]:
+        while index1<len(list_1) and index2<len(list_2): #compares first index of one list with first index of other list
+            if list_1[index1]==list_2[index2]:           #and increases index by one of that index which has smaller number
                 intersect_list.append(list_1[index1])
                 index1+=1
                 index2+=1
@@ -89,7 +89,7 @@ class BooleanRetrievalSystem:
 
     def binary_search(self,search_list,position_1,position_2):
         l,r=(0,len(search_list)-1)
-        while l<=r:
+        while l<=r:                    #simply binary search but checks the number in range between position_2 and position_1
             m=l +(r-l)//2
             if search_list[m]<=position_1 and search_list[m]>=position_2 :
                 return True
@@ -99,8 +99,8 @@ class BooleanRetrievalSystem:
                 r=m-1
         return False                
 
-    def process_proximity_query(self,user_query):
-        query_words,proximity_ratio=user_query.split('/')
+    def process_proximity_query(self,user_query):       #process proximity query but using above helper functions first takes intersect then loop thorugh that 
+        query_words,proximity_ratio=user_query.split('/') #intersect list and checks positions of both words in that doc
         word1,word2=query_words.split()
         word2=word2.replace(' ','')
         word1=ps.stem(word1)
@@ -138,7 +138,7 @@ class BooleanRetrievalSystem:
         return proximity_query_final_list
 
 
-    def not_of_list(self,list_1):
+    def not_of_list(self,list_1):              #this simply takes not of the list
         list_2=[ num for num in range(1,TOTAL_DOCS+1) ]
 
         for num in list_1:
@@ -207,7 +207,7 @@ class BooleanRetrievalSystem:
                 elif op=='or':
                     list_1=values.pop()
                     list_2=values.pop()
-                    values.append(list(set(list_1) | set(list_2) ))
+                    values.append(list(set(list_1) | set(list_2) ))  #creates SET inorder to remove duplicates and then merges the list
                 op=None    
 
             index+=1
@@ -218,7 +218,7 @@ class BooleanRetrievalSystem:
 
 
     def write_files(self):
-        inverted_index_json=json.dumps(self.inverted_index)
+        inverted_index_json=json.dumps(self.inverted_index)  #writes both file in json format
         positional_index_json=json.dumps(self.vocabulary)
         with open('inverted_index.json','w') as inverted_json:
             inverted_json.write(inverted_index_json)

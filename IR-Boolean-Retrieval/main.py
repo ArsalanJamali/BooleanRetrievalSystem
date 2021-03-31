@@ -8,7 +8,7 @@ window.configure(bg='#ffffff')
 
 
 query_input=tkinter.StringVar()
-initial_content='1) Type in any boolean query of form eg: (beard),(not love),( not god and love),(not water and love or god)\n2) Type in any proximity query of form eg: (smiling face/3),(filling room /1)\n3) Make Sure Boolean Query doesnot contain any brackets'
+initial_content='1) Type in any boolean query of form eg: beard,not love,not god and love,not water and love or god\n2) Type in any proximity query of form eg: (smiling face/3),(filling room /1)\n3) Make Sure Boolean Query doesnot contain any brackets\n4) Proximity Query is assumed to be retrieved in any order\n5) Make sure format and spelling of words are correct.'
 
 top_frame=tkinter.Frame(window,bg='#ffffff')
 top_frame.pack(side='top')
